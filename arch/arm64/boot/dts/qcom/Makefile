@@ -18,6 +18,7 @@ dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-sp970.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-ufi001b.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-ufi001c.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-ufi003.dtb
+dtb-$(CONFIG_ARCH_QCOM) += msm8916-handsome-openstick-ufi003-no-modem.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-ufi16v3.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-handsome-openstick-uz801.dtb
 dtb-$(CONFIG_ARCH_QCOM)	+= msm8916-huawei-g7.dtb
