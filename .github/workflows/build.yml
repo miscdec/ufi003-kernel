@@ -15,18 +15,19 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Prepare repository
+        run: git config --global --add safe.directory "$(pwd)"
+
       - name: Build
         run: |
           export CROSS_COMPILE=aarch64-linux-gnu-
           export ARCH=arm64
-          cp config .config
           make prepare
           make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
 
       - name: Generate release tag
         id: version
         run: |
-          git config --global --add safe.directory "$(pwd)"
           TAG_NAME=$(awk '/^VERSION =/{a=$3};/^PATCHLEVEL =/{b=$3};/^SUBLEVEL =/{c=$3};END{print a"."b"."c}' Makefile)-${{ github.run_number }}
           git tag $TAG_NAME
           git push origin $TAG_NAME
