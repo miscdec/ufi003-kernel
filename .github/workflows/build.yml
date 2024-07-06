@@ -1,0 +1,44 @@
+name: Build kernel deb packages
+on: push
+
+jobs:
+  build:
+    name: Build kernel
+    runs-on: ubuntu-latest
+    container: debian:bookworm
+    steps:
+      - name: Prepare
+        run: |
+          apt -y update
+          apt -y install git lsb-release binfmt-support qemu-user-static gcc-aarch64-linux-gnu bison flex libssl-dev debhelper bc rsync kmod cpio
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          export ARCH=arm64
+          cp config .config
+          make prepare
+          make deb-pkg -j"$(($(grep -c processor < /proc/cpuinfo)*2))"
+
+      - name: Generate release tag
+        id: version
+        run: |
+          git config --global --add safe.directory "$(pwd)"
+          TAG_NAME=$(awk '/^VERSION =/{a=$3};/^PATCHLEVEL =/{b=$3};/^SUBLEVEL =/{c=$3};END{print a"."b"."c}' Makefile)-${{ github.run_number }}
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+          CHANGE=$(git log -1 --format=%s)
+          echo "TAG_NAME=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "CHANGE=$CHANGE" >> $GITHUB_OUTPUT
+
+      - name: Releases
+        uses: softprops/action-gh-release@v2
+        with:
+          body: ${{ steps.version.outputs.CHANGE }}
+          tag_name: ${{ steps.version.outputs.TAG_NAME }}
+          files: |
+            arch/arm64/boot/Image.gz
+            ../linux-*
