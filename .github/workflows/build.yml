@@ -10,7 +10,7 @@ jobs:
       - name: Prepare
         run: |
           apt -y update
-          apt -y install git lsb-release binfmt-support qemu-user-static gcc-aarch64-linux-gnu bison flex libssl-dev debhelper bc rsync kmod cpio
+          apt -y install git lsb-release gcc-aarch64-linux-gnu bison flex libssl-dev debhelper bc rsync kmod cpio
 
       - name: Checkout
         uses: actions/checkout@v4
