@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2022 FIXME
+// Copyright (c) 2023 FIXME
 // Generated with linux-mdss-dsi-panel-driver-generator from vendor device tree:
 //   Copyright (c) 2013, The Linux Foundation. All rights reserved. (FIXME)
 
@@ -29,14 +29,6 @@ struct ea8061_id400418 *to_ea8061_id400418(struct drm_panel *panel)
 	return container_of(panel, struct ea8061_id400418, panel);
 }
 
-#define dsi_dcs_write_seq(dsi, seq...) do {				\
-		static const u8 d[] = { seq };				\
-		int ret;						\
-		ret = mipi_dsi_dcs_write_buffer(dsi, d, ARRAY_SIZE(d));	\
-		if (ret < 0)						\
-			return ret;					\
-	} while (0)
-
 static void ea8061_id400418_reset(struct ea8061_id400418 *ctx)
 {
 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
@@ -55,17 +47,17 @@ static int ea8061_id400418_on(struct ea8061_id400418 *ctx)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	dsi_dcs_write_seq(dsi, 0xf0, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xf7, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xc4,
-			  0x54, 0xb3, 0x54, 0xb3, 0x64, 0x9a, 0x64, 0x9a, 0x00,
-			  0x00, 0x0b, 0xfa, 0x00, 0x0b, 0xfa, 0x00, 0x00, 0x09,
-			  0x09, 0x09, 0x36, 0x68, 0xab, 0x00, 0x00, 0x08, 0x02,
-			  0x05, 0x00, 0x0c, 0x00);
-	dsi_dcs_write_seq(dsi, 0xf7, 0xa5, 0xa5);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_SET_ADDRESS_MODE, 0x02);
-	dsi_dcs_write_seq(dsi, 0xb3, 0x00, 0x30, 0x00, 0x30);
-	dsi_dcs_write_seq(dsi, 0xb4, 0x33, 0x07, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xf0, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xf7, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xc4,
+			       0x54, 0xb3, 0x54, 0xb3, 0x64, 0x9a, 0x64, 0x9a,
+			       0x00, 0x00, 0x0b, 0xfa, 0x00, 0x0b, 0xfa, 0x00,
+			       0x00, 0x09, 0x09, 0x09, 0x36, 0x68, 0xab, 0x00,
+			       0x00, 0x08, 0x02, 0x05, 0x00, 0x0c, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xf7, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_SET_ADDRESS_MODE, 0x02);
+	mipi_dsi_dcs_write_seq(dsi, 0xb3, 0x00, 0x30, 0x00, 0x30);
+	mipi_dsi_dcs_write_seq(dsi, 0xb4, 0x33, 0x07, 0x00);
 
 	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
 	if (ret < 0) {
@@ -74,33 +66,34 @@ static int ea8061_id400418_on(struct ea8061_id400418 *ctx)
 	}
 	msleep(120);
 
-	dsi_dcs_write_seq(dsi, 0xf7, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xca,
-			  0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x00, 0x00);
-	dsi_dcs_write_seq(dsi, 0xb3, 0x00, 0x30, 0x00, 0x30);
-	dsi_dcs_write_seq(dsi, 0xf7, 0xa5, 0xa5);
-	dsi_dcs_write_seq(dsi, 0xb2, 0x0f, 0xb4, 0xa0, 0x13, 0x00, 0x00, 0x00);
-	dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xd4, 0x38, 0x00, 0x48);
-	dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_POWER_SAVE, 0x02);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x06);
-	dsi_dcs_write_seq(dsi, 0xb2, 0x19);
-	dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x02);
-	dsi_dcs_write_seq(dsi, 0xd4, 0x48);
-	dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
-	dsi_dcs_write_seq(dsi, 0xb2, 0x0f);
-	dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xfc, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x01);
-	dsi_dcs_write_seq(dsi, 0xd7, 0x0a);
-	dsi_dcs_write_seq(dsi, 0xff, 0x0a);
-	dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
-	dsi_dcs_write_seq(dsi, 0xfc, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, 0xf7, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xca,
+			       0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xb3, 0x00, 0x30, 0x00, 0x30);
+	mipi_dsi_dcs_write_seq(dsi, 0xf7, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, 0xb2,
+			       0x0f, 0xb4, 0xa0, 0x13, 0x00, 0x00, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xd4, 0x38, 0x00, 0x48);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_POWER_SAVE, 0x02);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x06);
+	mipi_dsi_dcs_write_seq(dsi, 0xb2, 0x19);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x02);
+	mipi_dsi_dcs_write_seq(dsi, 0xd4, 0x48);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, 0xb2, 0x0f);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xfc, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x01);
+	mipi_dsi_dcs_write_seq(dsi, 0xd7, 0x0a);
+	mipi_dsi_dcs_write_seq(dsi, 0xff, 0x0a);
+	mipi_dsi_dcs_write_seq(dsi, 0xf1, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, 0xfc, 0xa5, 0xa5);
 
 	ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret < 0) {
@@ -257,6 +250,7 @@ static int ea8061_id400418_probe(struct mipi_dsi_device *dsi)
 
 	drm_panel_init(&ctx->panel, dev, &ea8061_id400418_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
+	ctx->panel.prepare_prev_first = true;
 
 	drm_panel_add(&ctx->panel);
 
@@ -270,7 +264,7 @@ static int ea8061_id400418_probe(struct mipi_dsi_device *dsi)
 	return 0;
 }
 
-static int ea8061_id400418_remove(struct mipi_dsi_device *dsi)
+static void ea8061_id400418_remove(struct mipi_dsi_device *dsi)
 {
 	struct ea8061_id400418 *ctx = mipi_dsi_get_drvdata(dsi);
 	int ret;
@@ -280,8 +274,6 @@ static int ea8061_id400418_remove(struct mipi_dsi_device *dsi)
 		dev_err(&dsi->dev, "Failed to detach from DSI host: %d\n", ret);
 
 	drm_panel_remove(&ctx->panel);
-
-	return 0;
 }
 
 static const struct of_device_id ea8061_id400418_of_match[] = {
@@ -302,4 +294,4 @@ module_mipi_dsi_driver(ea8061_id400418_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
 MODULE_DESCRIPTION("DRM driver for Samsung EA8061_ID400418 HD video mode panel");
-MODULE_LICENSE("GPL v2");
+MODULE_LICENSE("GPL");

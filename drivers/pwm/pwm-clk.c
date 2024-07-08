@@ -14,6 +14,8 @@
  *   (constant off or on), exact behavior will depend on the clock.
  * - When the PWM is disabled, the clock will be disabled as well,
  *   line state will depend on the clock.
+ * - The clk API doesn't expose the necessary calls to implement
+ *   .get_state().
  */
 
 #include <linux/kernel.h>
@@ -33,10 +35,10 @@ struct pwm_clk_chip {
 
 #define to_pwm_clk_chip(_chip) container_of(_chip, struct pwm_clk_chip, chip)
 
-static int pwm_clk_apply(struct pwm_chip *pwm_chip, struct pwm_device *pwm,
+static int pwm_clk_apply(struct pwm_chip *chip, struct pwm_device *pwm,
 			 const struct pwm_state *state)
 {
-	struct pwm_clk_chip *chip = to_pwm_clk_chip(pwm_chip);
+	struct pwm_clk_chip *pcchip = to_pwm_clk_chip(chip);
 	int ret;
 	u32 rate;
 	u64 period = state->period;
@@ -44,26 +46,33 @@ static int pwm_clk_apply(struct pwm_chip *pwm_chip, struct pwm_device *pwm,
 
 	if (!state->enabled) {
 		if (pwm->state.enabled) {
-			clk_disable(chip->clk);
-			chip->clk_enabled = false;
+			clk_disable(pcchip->clk);
+			pcchip->clk_enabled = false;
 		}
 		return 0;
 	} else if (!pwm->state.enabled) {
-		ret = clk_enable(chip->clk);
+		ret = clk_enable(pcchip->clk);
 		if (ret)
 			return ret;
-		chip->clk_enabled = true;
+		pcchip->clk_enabled = true;
 	}
 
+	/*
+	 * We have to enable the clk before setting the rate and duty_cycle,
+	 * that however results in a window where the clk is on with a
+	 * (potentially) different setting. Also setting period and duty_cycle
+	 * are two separate calls, so that probably isn't atomic either.
+	 */
+
 	rate = DIV64_U64_ROUND_UP(NSEC_PER_SEC, period);
-	ret = clk_set_rate(chip->clk, rate);
+	ret = clk_set_rate(pcchip->clk, rate);
 	if (ret)
 		return ret;
 
 	if (state->polarity == PWM_POLARITY_INVERSED)
 		duty_cycle = period - duty_cycle;
 
-	return clk_set_duty_cycle(chip->clk, duty_cycle, period);
+	return clk_set_duty_cycle(pcchip->clk, duty_cycle, period);
 }
 
 static const struct pwm_ops pwm_clk_ops = {
@@ -73,48 +82,38 @@ static const struct pwm_ops pwm_clk_ops = {
 
 static int pwm_clk_probe(struct platform_device *pdev)
 {
-	struct pwm_clk_chip *chip;
+	struct pwm_clk_chip *pcchip;
 	int ret;
 
-	chip = devm_kzalloc(&pdev->dev, sizeof(*chip), GFP_KERNEL);
-	if (!chip)
+	pcchip = devm_kzalloc(&pdev->dev, sizeof(*pcchip), GFP_KERNEL);
+	if (!pcchip)
 		return -ENOMEM;
 
-	chip->clk = devm_clk_get(&pdev->dev, NULL);
-	if (IS_ERR(chip->clk))
-		return dev_err_probe(&pdev->dev, PTR_ERR(chip->clk),
+	pcchip->clk = devm_clk_get_prepared(&pdev->dev, NULL);
+	if (IS_ERR(pcchip->clk))
+		return dev_err_probe(&pdev->dev, PTR_ERR(pcchip->clk),
 				     "Failed to get clock\n");
 
-	chip->chip.dev = &pdev->dev;
-	chip->chip.ops = &pwm_clk_ops;
-	chip->chip.npwm = 1;
+	pcchip->chip.dev = &pdev->dev;
+	pcchip->chip.ops = &pwm_clk_ops;
+	pcchip->chip.npwm = 1;
 
-	ret = clk_prepare(chip->clk);
+	ret = pwmchip_add(&pcchip->chip);
 	if (ret < 0)
-		return dev_err_probe(&pdev->dev, ret, "Failed to prepare clock\n");
-
-	ret = pwmchip_add(&chip->chip);
-	if (ret < 0) {
-		clk_unprepare(chip->clk);
 		return dev_err_probe(&pdev->dev, ret, "Failed to add pwm chip\n");
-	}
 
-	platform_set_drvdata(pdev, chip);
+	platform_set_drvdata(pdev, pcchip);
 	return 0;
 }
 
-static int pwm_clk_remove(struct platform_device *pdev)
+static void pwm_clk_remove(struct platform_device *pdev)
 {
-	struct pwm_clk_chip *chip = platform_get_drvdata(pdev);
+	struct pwm_clk_chip *pcchip = platform_get_drvdata(pdev);
 
-	pwmchip_remove(&chip->chip);
+	pwmchip_remove(&pcchip->chip);
 
-	if (chip->clk_enabled)
-		clk_disable(chip->clk);
-
-	clk_unprepare(chip->clk);
-
-	return 0;
+	if (pcchip->clk_enabled)
+		clk_disable(pcchip->clk);
 }
 
 static const struct of_device_id pwm_clk_dt_ids[] = {
@@ -129,7 +128,7 @@ static struct platform_driver pwm_clk_driver = {
 		.of_match_table = pwm_clk_dt_ids,
 	},
 	.probe = pwm_clk_probe,
-	.remove = pwm_clk_remove,
+	.remove_new = pwm_clk_remove,
 };
 module_platform_driver(pwm_clk_driver);
 

@@ -58,8 +58,7 @@ static const struct of_device_id st_magn_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, st_magn_of_match);
 
-static int st_magn_i2c_probe(struct i2c_client *client,
-			     const struct i2c_device_id *id)
+static int st_magn_i2c_probe(struct i2c_client *client)
 {
 	const struct st_sensor_settings *settings;
 	struct st_sensor_data *mdata;

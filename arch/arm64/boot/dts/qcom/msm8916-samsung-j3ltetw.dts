@@ -18,6 +18,19 @@
 			no-map;
 		};
 	};
+
+	reg_vdd_tsp_a: regulator-vdd-tsp-a {
+		compatible = "regulator-fixed";
+		regulator-name = "vdd_tsp_a";
+		regulator-min-microvolt = <3000000>;
+		regulator-max-microvolt = <3000000>;
+
+		gpio = <&tlmm 16 GPIO_ACTIVE_HIGH>;
+		enable-active-high;
+
+		pinctrl-0 = <&tsp_ldo_en_default>;
+		pinctrl-names = "default";
+	};
 };
 
 &accelerometer {
@@ -34,13 +47,13 @@
 };
 
 &i2c_muic {
-	sda-gpios = <&msmgpio 0 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-	scl-gpios = <&msmgpio 1 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+	sda-gpios = <&tlmm 0 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+	scl-gpios = <&tlmm 1 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
 };
 
 &i2c_sensors {
-	sda-gpios = <&msmgpio 6 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
-	scl-gpios = <&msmgpio 7 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+	sda-gpios = <&tlmm 6 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
+	scl-gpios = <&tlmm 7 (GPIO_ACTIVE_HIGH|GPIO_OPEN_DRAIN)>;
 };
 
 &panel {
@@ -49,14 +62,22 @@
 };
 
 &reg_vdd_lcd_3p0 {
-	status = "okay";
 	vin-supply = <&pm8916_l17>;
-	gpio = <&msmgpio 102 GPIO_ACTIVE_HIGH>;
+	gpio = <&tlmm 102 GPIO_ACTIVE_HIGH>;
+	status = "okay";
 };
 
-&reg_vdd_tsp_a {
-	status = "okay";
-	gpio = <&msmgpio 16 GPIO_ACTIVE_HIGH>;
+&touchscreen {
+	vdd-supply = <&reg_vdd_tsp_a>;
+};
+
+&tlmm {
+	tsp_ldo_en_default: tsp-ldo-en-default-state {
+		pins = "gpio16";
+		function = "gpio";
+		drive-strength = <2>;
+		bias-disable;
+	};
 };
 
 &lcd_3p0_ldo_en_default {
@@ -69,8 +90,4 @@
 
 &sensors_i2c_default {
 	pins = "gpio6", "gpio7";
-};
-
-&tsp_ldo_en_default {
-	pins = "gpio16";
 };

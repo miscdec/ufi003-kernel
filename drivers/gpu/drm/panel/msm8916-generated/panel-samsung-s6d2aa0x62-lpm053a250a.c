@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2022 FIXME
+// Copyright (c) 2023 FIXME
 // Generated with linux-mdss-dsi-panel-driver-generator from vendor device tree:
 //   Copyright (c) 2013, The Linux Foundation. All rights reserved. (FIXME)
 
@@ -30,14 +30,6 @@ static inline struct s6d2aa0x *to_s6d2aa0x(struct drm_panel *panel)
 	return container_of(panel, struct s6d2aa0x, panel);
 }
 
-#define dsi_dcs_write_seq(dsi, seq...) do {				\
-		static const u8 d[] = { seq };				\
-		int ret;						\
-		ret = mipi_dsi_dcs_write_buffer(dsi, d, ARRAY_SIZE(d));	\
-		if (ret < 0)						\
-			return ret;					\
-	} while (0)
-
 static void s6d2aa0x_reset(struct s6d2aa0x *ctx)
 {
 	gpiod_set_value_cansleep(ctx->reset_gpio, 1);
@@ -52,33 +44,34 @@ static int s6d2aa0x_on(struct s6d2aa0x *ctx)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	dsi_dcs_write_seq(dsi, 0x11, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0x11, 0x00);
 	msleep(120);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x00);
-	dsi_dcs_write_seq(dsi, 0xc9,
-			  0x0c, 0x19, 0x1c, 0x28, 0x32, 0x3e, 0x48, 0x57, 0x3b,
-			  0x43, 0x51, 0x5f, 0x68, 0x70, 0x7f, 0x0c, 0x19, 0x1c,
-			  0x28, 0x32, 0x3e, 0x48, 0x57, 0x3b, 0x43, 0x51, 0x5f,
-			  0x68, 0x70, 0x7f);
-	dsi_dcs_write_seq(dsi, 0xca,
-			  0x01, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x00, 0xff,
-			  0x00, 0xfe, 0xb6, 0x00, 0x00, 0x00, 0x00, 0x00, 0xfc,
-			  0x00);
-	dsi_dcs_write_seq(dsi, 0xb7, 0x78, 0x64, 0x10, 0x64, 0xab);
-	dsi_dcs_write_seq(dsi, 0xb8,
-			  0xb4, 0x40, 0x43, 0x49, 0x55, 0x62, 0x71, 0x82, 0x94,
-			  0xa8, 0xb9, 0xcb, 0xdb, 0xe9, 0xf5, 0xfc, 0xff);
-	dsi_dcs_write_seq(dsi, 0xb9, 0xb4, 0xa0);
-	dsi_dcs_write_seq(dsi, 0xbb, 0x2e);
-	dsi_dcs_write_seq(dsi, 0xbc, 0x01, 0x38, 0x04, 0x04, 0x00, 0x00);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_SET_ADDRESS_MODE, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xc9,
+			       0x0c, 0x19, 0x1c, 0x28, 0x32, 0x3e, 0x48, 0x57,
+			       0x3b, 0x43, 0x51, 0x5f, 0x68, 0x70, 0x7f, 0x0c,
+			       0x19, 0x1c, 0x28, 0x32, 0x3e, 0x48, 0x57, 0x3b,
+			       0x43, 0x51, 0x5f, 0x68, 0x70, 0x7f);
+	mipi_dsi_dcs_write_seq(dsi, 0xca,
+			       0x01, 0x00, 0x00, 0x00, 0x00, 0xc0, 0x00, 0x00,
+			       0xff, 0x00, 0xfe, 0xb6, 0x00, 0x00, 0x00, 0x00,
+			       0x00, 0xfc, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xb7, 0x78, 0x64, 0x10, 0x64, 0xab);
+	mipi_dsi_dcs_write_seq(dsi, 0xb8,
+			       0xb4, 0x40, 0x43, 0x49, 0x55, 0x62, 0x71, 0x82,
+			       0x94, 0xa8, 0xb9, 0xcb, 0xdb, 0xe9, 0xf5, 0xfc,
+			       0xff);
+	mipi_dsi_dcs_write_seq(dsi, 0xb9, 0xb4, 0xa0);
+	mipi_dsi_dcs_write_seq(dsi, 0xbb, 0x2e);
+	mipi_dsi_dcs_write_seq(dsi, 0xbc, 0x01, 0x38, 0x04, 0x04, 0x00, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_SET_ADDRESS_MODE, 0x00);
 	msleep(20);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY, 0x26);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_POWER_SAVE, 0x00);
-	dsi_dcs_write_seq(dsi, MIPI_DCS_SET_CABC_MIN_BRIGHTNESS, 0x00);
-	dsi_dcs_write_seq(dsi, 0x29, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_CONTROL_DISPLAY, 0x26);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_WRITE_POWER_SAVE, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, MIPI_DCS_SET_CABC_MIN_BRIGHTNESS, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0x29, 0x00);
 	usleep_range(10000, 11000);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x00);
 
 	return 0;
 }
@@ -272,6 +265,7 @@ static int s6d2aa0x_probe(struct mipi_dsi_device *dsi)
 
 	drm_panel_init(&ctx->panel, dev, &s6d2aa0x_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
+	ctx->panel.prepare_prev_first = true;
 
 	ctx->panel.backlight = s6d2aa0x_create_backlight(dsi);
 	if (IS_ERR(ctx->panel.backlight))
@@ -290,7 +284,7 @@ static int s6d2aa0x_probe(struct mipi_dsi_device *dsi)
 	return 0;
 }
 
-static int s6d2aa0x_remove(struct mipi_dsi_device *dsi)
+static void s6d2aa0x_remove(struct mipi_dsi_device *dsi)
 {
 	struct s6d2aa0x *ctx = mipi_dsi_get_drvdata(dsi);
 	int ret;
@@ -300,8 +294,6 @@ static int s6d2aa0x_remove(struct mipi_dsi_device *dsi)
 		dev_err(&dsi->dev, "Failed to detach from DSI host: %d\n", ret);
 
 	drm_panel_remove(&ctx->panel);
-
-	return 0;
 }
 
 static const struct of_device_id s6d2aa0x_of_match[] = {
@@ -322,4 +314,4 @@ module_mipi_dsi_driver(s6d2aa0x_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
 MODULE_DESCRIPTION("DRM driver for s6d2aa0x hd video mode dsi panel");
-MODULE_LICENSE("GPL v2");
+MODULE_LICENSE("GPL");

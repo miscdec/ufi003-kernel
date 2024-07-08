@@ -22,7 +22,7 @@
 };
 
 &reg_touch_key {
-	gpio = <&msmgpio 60 GPIO_ACTIVE_HIGH>;
+	gpio = <&tlmm 60 GPIO_ACTIVE_HIGH>;
 };
 
 &tkey_en_default {

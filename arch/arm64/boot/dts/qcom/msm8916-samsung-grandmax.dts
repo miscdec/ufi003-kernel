@@ -3,6 +3,7 @@
 /dts-v1/;
 
 #include "msm8916-samsung-e2015-common.dtsi"
+#include <dt-bindings/leds/common.h>
 
 /*
  * NOTE: The original firmware from Samsung can only boot ARM32 kernels on some
@@ -26,51 +27,83 @@
 	/delete-node/ i2c-nfc;
 	/delete-node/ i2c-tkey;
 
+	gpio-leds {
+		compatible = "gpio-leds";
+		led-keyled {
+			function = LED_FUNCTION_KBD_BACKLIGHT;
+			color = <LED_COLOR_ID_WHITE>;
+
+			gpios = <&tlmm 60 GPIO_ACTIVE_HIGH>;
+
+			pinctrl-names = "default";
+			pinctrl-0 = <&gpio_leds_default>;
+		};
+	};
+
 	reg_vlcd_vcc: regulator-vlcd-vcc {
 		compatible = "regulator-fixed";
 		regulator-name = "vlcd_vcc";
 		regulator-min-microvolt = <1800000>;
 		regulator-max-microvolt = <1800000>;
 
-		gpio = <&msmgpio 16 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 16 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_on_default>;
 	};
 
-	reg_vsp: reg-vsp {
+	reg_vsp: regulator-vsp {
 		compatible = "regulator-fixed";
 		regulator-name = "reg-vsp";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 
-		gpio = <&msmgpio 97 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 97 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_enp_default>;
 	};
 
-	reg_vsn: reg-vsn {
+	reg_vsn: regulator-vsn {
 		compatible = "regulator-fixed";
 		regulator-name = "reg-vsn";
 		regulator-min-microvolt = <5000000>;
 		regulator-max-microvolt = <5000000>;
 
-		gpio = <&msmgpio 120 GPIO_ACTIVE_HIGH>;
+		gpio = <&tlmm 120 GPIO_ACTIVE_HIGH>;
 		enable-active-high;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&lcd_enn_default>;
 	};
+};
 
-	vibrator {
-		compatible = "gpio-vibrator";
-		enable-gpios = <&msmgpio 72 GPIO_ACTIVE_HIGH>;
+&battery {
+	charge-term-current-microamp = <150000>;
+	constant-charge-current-max-microamp = <1000000>;
+	constant-charge-voltage-max-microvolt = <4400000>;
+};
+
+&blsp_i2c5 {
+	status = "okay";
+
+	touchscreen@50 {
+		compatible = "imagis,ist3038";
+		reg = <0x50>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <13 IRQ_TYPE_EDGE_FALLING>;
+
+		touchscreen-size-x = <720>;
+		touchscreen-size-y = <1280>;
+
+		vdd-supply = <&reg_vdd_tsp_a>;
+		vddio-supply = <&pm8916_l6>;
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&motor_en_default>;
+		pinctrl-0 = <&ts_int_default>;
 	};
 };
 
@@ -81,14 +114,34 @@
 	vsp-supply = <&reg_vsp>;
 	vsn-supply = <&reg_vsn>;
 
-	backlight-gpios = <&msmgpio 98 GPIO_ACTIVE_HIGH>;
+	backlight-gpios = <&tlmm 98 GPIO_ACTIVE_HIGH>;
 
 	pinctrl-names = "default";
 	pinctrl-0 = <&lcd_bl_en_default>;
 };
 
-&msmgpio {
-	lcd_bl_en_default: lcd-bl-en-default {
+&reg_motor_vdd {
+	gpio = <&tlmm 72 GPIO_ACTIVE_HIGH>;
+};
+
+&reg_touch_key {
+	status = "disabled";
+};
+
+&sound {
+	model = "samsung-gmax"; /* No secondary microphone */
+};
+
+&tlmm {
+	gpio_leds_default: gpio-led-default-state {
+		pins = "gpio60";
+		function = "gpio";
+
+		drive-strength = <2>;
+		bias-disable;
+	};
+
+	lcd_bl_en_default: lcd-bl-en-default-state {
 		pins = "gpio98";
 		function = "gpio";
 
@@ -96,7 +149,7 @@
 		bias-disable;
 	};
 
-	lcd_enp_default: lcd-enp-default {
+	lcd_enp_default: lcd-enp-default-state {
 		pins = "gpio97";
 		function = "gpio";
 
@@ -104,7 +157,7 @@
 		bias-disable;
 	};
 
-	lcd_enn_default: lcd-enn-default {
+	lcd_enn_default: lcd-enn-default-state {
 		pins = "gpio120";
 		function = "gpio";
 
@@ -112,19 +165,15 @@
 		bias-disable;
 	};
 
-	lcd_on_default: lcd-on-default {
+	lcd_on_default: lcd-on-default-state {
 		pins = "gpio16";
 		function = "gpio";
 
 		drive-strength = <2>;
 		bias-disable;
 	};
+};
 
-	motor_en_default: motor-en-default {
-		pins = "gpio72";
-		function = "gpio";
-
-		drive-strength = <2>;
-		bias-disable;
-	};
+&motor_en_default {
+	pins = "gpio72";
 };

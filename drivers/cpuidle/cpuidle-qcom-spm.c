@@ -11,13 +11,12 @@
 #include <linux/io.h>
 #include <linux/slab.h>
 #include <linux/of.h>
-#include <linux/of_address.h>
-#include <linux/of_device.h>
+#include <linux/of_platform.h>
 #include <linux/err.h>
 #include <linux/platform_device.h>
 #include <linux/cpuidle.h>
 #include <linux/cpu_pm.h>
-#include <linux/qcom_scm.h>
+#include <linux/firmware/qcom/qcom_scm.h>
 #include <soc/qcom/spm.h>
 
 #include <asm/proc-fns.h>
@@ -46,7 +45,11 @@ static int qcom_cpu_spc(struct spm_driver_data *drv)
 	int ret;
 
 	spm_set_low_power_mode(drv, PM_SLEEP_MODE_SPC);
+	if (!IS_ENABLED(CONFIG_ARM64))
+		ct_cpuidle_enter();
 	ret = cpu_suspend(0, qcom_pm_collapse);
+	if (!IS_ENABLED(CONFIG_ARM64))
+		ct_cpuidle_exit();
 	/*
 	 * ARM common code executes WFI without calling into our driver and
 	 * if the SPM mode is not reset, then we may accidently power down the
@@ -58,13 +61,13 @@ static int qcom_cpu_spc(struct spm_driver_data *drv)
 	return ret;
 }
 
-static int spm_enter_idle_state(struct cpuidle_device *dev,
-				struct cpuidle_driver *drv, int idx)
+static __cpuidle int spm_enter_idle_state(struct cpuidle_device *dev,
+					  struct cpuidle_driver *drv, int idx)
 {
 	struct cpuidle_qcom_spm_data *data = container_of(drv, struct cpuidle_qcom_spm_data,
 							  cpuidle_driver);
 
-	return CPU_PM_CPU_IDLE_ENTER_PARAM(qcom_cpu_spc, idx, data->spm);
+	return CPU_PM_CPU_IDLE_ENTER_PARAM_RCU(qcom_cpu_spc, idx, data->spm);
 }
 
 static struct cpuidle_driver qcom_spm_idle_driver = {

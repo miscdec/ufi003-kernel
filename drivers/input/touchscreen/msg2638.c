@@ -21,6 +21,7 @@
 #include <linux/kernel.h>
 #include <linux/mod_devicetable.h>
 #include <linux/module.h>
+#include <linux/property.h>
 #include <linux/regulator/consumer.h>
 #include <linux/slab.h>
 
@@ -99,7 +100,7 @@ static void msg2138_report_keys(struct msg2638_ts_data *msg2638, u8 keys)
 
 	for (i = 0; i < msg2638->num_keycodes; ++i)
 		input_report_key(msg2638->input_dev, msg2638->keycodes[i],
-				 !!(keys & BIT(i)));
+				 keys & BIT(i));
 }
 
 static irqreturn_t msg2138_ts_irq_handler(int irq, void *msg2638_handler)
@@ -145,8 +146,8 @@ static irqreturn_t msg2138_ts_irq_handler(int irq, void *msg2638_handler)
 		goto report;
 	}
 
-	x = (((p0->xy_hi & 0xF0) << 4) | p0->x_low);
-	y = (((p0->xy_hi & 0x0F) << 8) | p0->y_low);
+	x = ((p0->xy_hi & 0xF0) << 4) | p0->x_low;
+	y = ((p0->xy_hi & 0x0F) << 8) | p0->y_low;
 
 	input_mt_slot(input, 0);
 	input_mt_report_slot_state(input, MT_TOOL_FINGER, true);
@@ -157,8 +158,8 @@ static irqreturn_t msg2138_ts_irq_handler(int irq, void *msg2638_handler)
 		goto report;
 
 	/* Second finger is reported as a delta position */
-	delta_x = (((p1->xy_hi & 0xF0) << 4) | p1->x_low);
-	delta_y = (((p1->xy_hi & 0x0F) << 8) | p1->y_low);
+	delta_x = ((p1->xy_hi & 0xF0) << 4) | p1->x_low;
+	delta_y = ((p1->xy_hi & 0x0F) << 8) | p1->y_low;
 
 	/* Ignore second finger if both deltas equal 0 */
 	if (delta_x == 0 && delta_y == 0)
@@ -325,7 +326,8 @@ static int msg2638_init_input_dev(struct msg2638_ts_data *msg2638)
 		input_dev->keycodemax = msg2638->num_keycodes;
 		input_dev->keycodesize = sizeof(msg2638->keycodes[0]);
 		for (i = 0; i < msg2638->num_keycodes; i++)
-			input_set_capability(input_dev, EV_KEY, msg2638->keycodes[i]);
+			input_set_capability(input_dev,
+					     EV_KEY, msg2638->keycodes[i]);
 	}
 
 	input_set_capability(input_dev, EV_ABS, ABS_MT_POSITION_X);
@@ -396,16 +398,29 @@ static int msg2638_ts_probe(struct i2c_client *client)
 		return error;
 	}
 
-	msg2638->num_keycodes =
-		of_property_read_variable_u32_array(dev->of_node, "linux,keycodes",
-						    msg2638->keycodes, 0,
-						    ARRAY_SIZE(msg2638->keycodes));
+	msg2638->num_keycodes = device_property_count_u32(dev,
+							  "linux,keycodes");
 	if (msg2638->num_keycodes == -EINVAL) {
 		msg2638->num_keycodes = 0;
 	} else if (msg2638->num_keycodes < 0) {
 		dev_err(dev, "Unable to parse linux,keycodes property: %d\n",
 			msg2638->num_keycodes);
 		return msg2638->num_keycodes;
+	} else if (msg2638->num_keycodes > ARRAY_SIZE(msg2638->keycodes)) {
+		dev_warn(dev, "Found %d linux,keycodes but max is %zd, ignoring the rest\n",
+			 msg2638->num_keycodes, ARRAY_SIZE(msg2638->keycodes));
+		msg2638->num_keycodes = ARRAY_SIZE(msg2638->keycodes);
+	}
+
+	if (msg2638->num_keycodes > 0) {
+		error = device_property_read_u32_array(dev, "linux,keycodes",
+						       msg2638->keycodes,
+						       msg2638->num_keycodes);
+		if (error) {
+			dev_err(dev, "Unable to read linux,keycodes values: %d\n",
+				error);
+			return error;
+		}
 	}
 
 	error = devm_request_threaded_irq(dev, client->irq,
@@ -426,7 +441,7 @@ static int msg2638_ts_probe(struct i2c_client *client)
 	return 0;
 }
 
-static int __maybe_unused msg2638_suspend(struct device *dev)
+static int msg2638_suspend(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct msg2638_ts_data *msg2638 = i2c_get_clientdata(client);
@@ -441,7 +456,7 @@ static int __maybe_unused msg2638_suspend(struct device *dev)
 	return 0;
 }
 
-static int __maybe_unused msg2638_resume(struct device *dev)
+static int msg2638_resume(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct msg2638_ts_data *msg2638 = i2c_get_clientdata(client);
@@ -457,7 +472,7 @@ static int __maybe_unused msg2638_resume(struct device *dev)
 	return ret;
 }
 
-static SIMPLE_DEV_PM_OPS(msg2638_pm_ops, msg2638_suspend, msg2638_resume);
+static DEFINE_SIMPLE_DEV_PM_OPS(msg2638_pm_ops, msg2638_suspend, msg2638_resume);
 
 static const struct msg_chip_data msg2138_data = {
 	.irq_handler = msg2138_ts_irq_handler,
@@ -477,10 +492,10 @@ static const struct of_device_id msg2638_of_match[] = {
 MODULE_DEVICE_TABLE(of, msg2638_of_match);
 
 static struct i2c_driver msg2638_ts_driver = {
-	.probe_new = msg2638_ts_probe,
+	.probe = msg2638_ts_probe,
 	.driver = {
 		.name = "MStar-TS",
-		.pm = &msg2638_pm_ops,
+		.pm = pm_sleep_ptr(&msg2638_pm_ops),
 		.of_match_table = msg2638_of_match,
 	},
 };

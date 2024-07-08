@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-// Copyright (c) 2022 FIXME
+// Copyright (c) 2023 FIXME
 // Generated with linux-mdss-dsi-panel-driver-generator from vendor device tree:
 //   Copyright (c) 2013, The Linux Foundation. All rights reserved. (FIXME)
 
@@ -27,14 +27,6 @@ struct s6e8aa5x01_ams520kt01 *to_s6e8aa5x01_ams520kt01(struct drm_panel *panel)
 	return container_of(panel, struct s6e8aa5x01_ams520kt01, panel);
 }
 
-#define dsi_dcs_write_seq(dsi, seq...) do {				\
-		static const u8 d[] = { seq };				\
-		int ret;						\
-		ret = mipi_dsi_dcs_write_buffer(dsi, d, ARRAY_SIZE(d));	\
-		if (ret < 0)						\
-			return ret;					\
-	} while (0)
-
 static void s6e8aa5x01_ams520kt01_reset(struct s6e8aa5x01_ams520kt01 *ctx)
 {
 	gpiod_set_value_cansleep(ctx->reset_gpio, 0);
@@ -53,8 +45,8 @@ static int s6e8aa5x01_ams520kt01_on(struct s6e8aa5x01_ams520kt01 *ctx)
 
 	dsi->mode_flags |= MIPI_DSI_MODE_LPM;
 
-	dsi_dcs_write_seq(dsi, 0xf0, 0x5a, 0x5a);
-	dsi_dcs_write_seq(dsi, 0xcc, 0x4c);
+	mipi_dsi_dcs_write_seq(dsi, 0xf0, 0x5a, 0x5a);
+	mipi_dsi_dcs_write_seq(dsi, 0xcc, 0x4c);
 
 	ret = mipi_dsi_dcs_exit_sleep_mode(dsi);
 	if (ret < 0) {
@@ -63,20 +55,21 @@ static int s6e8aa5x01_ams520kt01_on(struct s6e8aa5x01_ams520kt01 *ctx)
 	}
 	msleep(20);
 
-	dsi_dcs_write_seq(dsi, 0xca,
-			  0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
-			  0x80, 0x80, 0x80, 0x00, 0x00, 0x00);
-	dsi_dcs_write_seq(dsi, 0xb2, 0x04, 0xee);
-	dsi_dcs_write_seq(dsi, 0xb6, 0xac, 0x0f);
-	dsi_dcs_write_seq(dsi, 0xf7, 0x03);
+	mipi_dsi_dcs_write_seq(dsi, 0xca,
+			       0x01, 0x00, 0x01, 0x00, 0x01, 0x00, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x80,
+			       0x80, 0x80, 0x80, 0x80, 0x80, 0x80, 0x00, 0x00,
+			       0x00);
+	mipi_dsi_dcs_write_seq(dsi, 0xb2, 0x04, 0xee);
+	mipi_dsi_dcs_write_seq(dsi, 0xb6, 0xac, 0x0f);
+	mipi_dsi_dcs_write_seq(dsi, 0xf7, 0x03);
 	usleep_range(16000, 17000);
-	dsi_dcs_write_seq(dsi, 0xc0, 0xd8, 0xd8, 0x40);
-	dsi_dcs_write_seq(dsi, 0xb0, 0x06);
-	dsi_dcs_write_seq(dsi, 0xb8, 0xa8);
+	mipi_dsi_dcs_write_seq(dsi, 0xc0, 0xd8, 0xd8, 0x40);
+	mipi_dsi_dcs_write_seq(dsi, 0xb0, 0x06);
+	mipi_dsi_dcs_write_seq(dsi, 0xb8, 0xa8);
 	msleep(120);
-	dsi_dcs_write_seq(dsi, 0xf0, 0xa5, 0xa5);
+	mipi_dsi_dcs_write_seq(dsi, 0xf0, 0xa5, 0xa5);
 
 	ret = mipi_dsi_dcs_set_display_on(dsi);
 	if (ret < 0) {
@@ -231,6 +224,7 @@ static int s6e8aa5x01_ams520kt01_probe(struct mipi_dsi_device *dsi)
 
 	drm_panel_init(&ctx->panel, dev, &s6e8aa5x01_ams520kt01_panel_funcs,
 		       DRM_MODE_CONNECTOR_DSI);
+	ctx->panel.prepare_prev_first = true;
 
 	drm_panel_add(&ctx->panel);
 
@@ -244,7 +238,7 @@ static int s6e8aa5x01_ams520kt01_probe(struct mipi_dsi_device *dsi)
 	return 0;
 }
 
-static int s6e8aa5x01_ams520kt01_remove(struct mipi_dsi_device *dsi)
+static void s6e8aa5x01_ams520kt01_remove(struct mipi_dsi_device *dsi)
 {
 	struct s6e8aa5x01_ams520kt01 *ctx = mipi_dsi_get_drvdata(dsi);
 	int ret;
@@ -254,8 +248,6 @@ static int s6e8aa5x01_ams520kt01_remove(struct mipi_dsi_device *dsi)
 		dev_err(&dsi->dev, "Failed to detach from DSI host: %d\n", ret);
 
 	drm_panel_remove(&ctx->panel);
-
-	return 0;
 }
 
 static const struct of_device_id s6e8aa5x01_ams520kt01_of_match[] = {
@@ -276,4 +268,4 @@ module_mipi_dsi_driver(s6e8aa5x01_ams520kt01_driver);
 
 MODULE_AUTHOR("linux-mdss-dsi-panel-driver-generator <fix@me>"); // FIXME
 MODULE_DESCRIPTION("DRM driver for ss_dsi_panel_S6E8AA5X01_AMS520KT01_HD");
-MODULE_LICENSE("GPL v2");
+MODULE_LICENSE("GPL");

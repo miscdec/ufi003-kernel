@@ -4,7 +4,7 @@
 #include <linux/types.h>
 #include <linux/module.h>
 #include <linux/of.h>
-#include <linux/of_address.h>
+#include <linux/of_reserved_mem.h>
 #include <linux/device.h>
 #include <linux/platform_device.h>
 #include <linux/net.h>
@@ -373,11 +373,11 @@ static int memshare_probe_dt(struct memshare *share)
 {
 	struct device_node *np = share->dev->of_node;
 	struct device_node *proc_node = NULL, *client_node = NULL, *mem_node = NULL;
+	struct reserved_mem *rmem;
 	int ret = 0;
 	u32 proc_id, qrtr_node;
 	struct memshare_client *client;
 	phandle legacy_client = 0;
-	struct resource reserved_memory;
 
 	ret = of_property_read_u32(np, "qcom,legacy-client", &legacy_client);
 	if (ret && ret != -EINVAL)
@@ -413,13 +413,16 @@ static int memshare_probe_dt(struct memshare *share)
 
 			mem_node = of_parse_phandle(client_node, "memory-region", 0);
 			if (mem_node) {
-				ret = of_address_to_resource(mem_node, 0, &reserved_memory);
+				rmem = of_reserved_mem_lookup(mem_node);
 				of_node_put(mem_node);
-				if (ret)
+				if (!rmem) {
+					dev_err(share->dev, "unable to resolve memory-region\n");
+					ret = -EINVAL;
 					goto error;
+				}
 
-				client->phy_addr = reserved_memory.start;
-				client->size = resource_size(&reserved_memory);
+				client->phy_addr = rmem->base;
+				client->size = rmem->size;
 			}
 
 			if (client_node->phandle == legacy_client)

@@ -34,12 +34,14 @@ Specify a hardware pattern for a Qualcomm LPG LED.
 
 The pattern is a series of brightness and hold-time pairs, with the hold-time
 expressed in milliseconds. The hold time is a property of the pattern and must
-therefor be identical for each element in the pattern (except for the pauses
-described below).
+therefore be identical for each element in the pattern (except for the pauses
+described below). As the LPG hardware is not able to perform the linear
+transitions expected by the leds-trigger-pattern format, each entry in the
+pattern must be followed a zero-length entry of the same brightness.
 
 Simple pattern::
 
-    "255 500 0 500"
+    "255 500 255 0 0 500 0 0"
 
         ^
         |
@@ -54,7 +56,7 @@ in the pattern, the so called "low pause" and "high pause".
 
 Low-pause pattern::
 
-    "255 1000 0 500 255 500 0 500"
+    "255 1000 255 0 0 500 0 0 255 500 255 0 0 500 0 0"
 
         ^
         |
@@ -64,7 +66,7 @@ Low-pause pattern::
         +----------------------------->
         0    5   10   15  20   25   time (100ms)
 
-Similarily, the last entry can be stretched by using a higher hold-time on the
+Similarly, the last entry can be stretched by using a higher hold-time on the
 last entry.
 
 In order to save space in the shared lookup table the LPG supports "ping-pong"

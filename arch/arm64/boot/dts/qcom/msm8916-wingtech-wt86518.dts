@@ -15,7 +15,7 @@
 		pinctrl-names = "default";
 		pinctrl-0 = <&spk_ext_pa_default>;
 
-		mode-gpios = <&msmgpio 119 GPIO_ACTIVE_HIGH>;
+		mode-gpios = <&tlmm 119 GPIO_ACTIVE_HIGH>;
 		awinic,mode = <1>;
 		sound-name-prefix = "Speaker Amp";
 	};
@@ -47,17 +47,17 @@
 	status = "disabled";
 };
 
-&pm8916_charger {
-	status = "okay";
-
-	qcom,vdd-safe = <4300000>;
-	qcom,ibat-safe = <900000>;
-
-	monitored-battery = <&battery>;
-};
-
 &pm8916_bms {
 	power-supplies = <&pm8916_charger>;
+};
+
+&pm8916_charger {
+	qcom,fast-charge-safe-current = <900000>;
+	qcom,fast-charge-safe-voltage = <4300000>;
+
+	monitored-battery = <&battery>;
+
+	status = "okay";
 };
 
 &reg_lcd_neg {
@@ -71,8 +71,6 @@
 };
 
 &sound {
-	status = "okay";
-
 	model = "wt88047";
 	widgets =
 		"Speaker", "Speaker",
@@ -99,8 +97,8 @@
 	extcon = <&pm8916_charger>;
 };
 
-&msmgpio {
-	spk_ext_pa_default: spk-ext-pa-default {
+&tlmm {
+	spk_ext_pa_default: spk-ext-pa-default-state {
 		pins = "gpio119";
 		function = "gpio";
 
