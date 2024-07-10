@@ -6,7 +6,7 @@
 	#size-cells = <0x02>;
 	chassis-type = "embedded";
 	model = "UFI003 4G Modem Stick";
-	compatible = "thwc,ufi001c\0qcom,msm8916";
+	compatible = "thwc,ufi003\0qcom,msm8916";
 
 	chosen {
 		stdout-path = "serial0";
@@ -98,6 +98,7 @@
 			phandle = <0x62>;
 		};
 
+/*
 		gps {
 			size = <0x00 0x200000>;
 			alignment = <0x00 0x100000>;
@@ -106,6 +107,7 @@
 			status = "disabled";
 			phandle = <0x16>;
 		};
+*/
 	};
 
 	clocks {

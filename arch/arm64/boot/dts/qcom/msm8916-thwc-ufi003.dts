@@ -6,7 +6,7 @@
 
 / {
 	model = "UFI003 4G Modem Stick";
-	compatible = "thwc,ufi001c", "qcom,msm8916";
+	compatible = "thwc,ufi003", "qcom,msm8916";
 };
 
 &button_restart {
